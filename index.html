@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Journey of Football's Top Scorers</title>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<style>
+    .chart {
+    max-width: 800px;
+    margin: 50px auto;
+    }
+
+    .caption-text {
+        text-align: left;
+    }
+
+    .next-page-button {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background-color: #007bff;
+        color: #fff;
+        border: none;
+        padding: 10px 20px;
+        font-size: 16px;
+        cursor: pointer;
+        border-radius: 4px;
+    }
+
+    .chart-title {
+    font-size: 20px;
+    font-weight: bold;
+    text-align: center;
+    }
+
+    .chart-subtitle {
+    font-size: 14px;
+    text-align: center;
+    margin-top: 10px;
+    }
+
+    .chart-note {
+    font-size: 12px;
+    text-align: center;
+    margin-top: 10px;
+    }
+
+    .red-circle {
+    fill: red;
+    }
+
+    .caption-box {
+    font-size: 12px;
+    background-color: #f9f9f9;
+    border: 1px solid #ccc;
+    padding: 4px;
+    pointer-events: none;
+    }
+</style>
+</head>
+<body>
+<div class="chart">
+    <div class="chart-title">Lionel Messi's Journey</div>
+    <svg id="line-chart"></svg>
+</div>
+<div class="chart">
+    <div class="chart-title">Cristiano Ronaldo's Journey</div>
+    <svg id="line-chart-ronaldo"></svg>
+</div>
+
+<script>
+
+    const messiData = [
+    { Year: 2016, Goals: 37 },
+    { Year: 2017, Goals: 33 },
+    { Year: 2018, Goals: 36 },
+    { Year: 2019, Goals: 25 },
+    { Year: 2020, Goals: 4 }
+    ];
+
+
+    const ronaldoData = [
+    { Year: 2016, Goals: 42 },
+    { Year: 2017, Goals: 44 },
+    { Year: 2018, Goals: 28 },
+    { Year: 2019, Goals: 37 },
+    { Year: 2020, Goals: 35 }
+    ];
+
+
+    function createLineChart(data, containerId, winnerYears) {
+    const margin = { top: 50, right: 30, bottom: 70, left: 70 };
+    const width = 800 - margin.left - margin.right;
+    const height = 400 - margin.top - margin.bottom;
+
+    const svg = d3.select(`#${containerId}`)
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+        .attr("transform", `translate(${margin.left}, ${margin.top})`);
+
+
+    const xScale = d3.scaleLinear()
+        .domain([2016, 2020]) 
+        .range([0, width]);
+
+    const yScale = d3.scaleLinear()
+        .domain([0, d3.max(data, d => d.Goals)])
+        .range([height, 0]);
+
+
+    const line = d3.line()
+        .x(d => xScale(d.Year))
+        .y(d => yScale(d.Goals));
+
+
+    svg.append("path")
+        .datum(data)
+        .attr("fill", "none")
+        .attr("stroke", "steelblue")
+        .attr("stroke-width", 2)
+        .attr("d", line);
+
+
+    svg.selectAll("circle")
+        .data(data)
+        .enter()
+        .append("circle")
+        .attr("cx", d => xScale(d.Year))
+        .attr("cy", d => yScale(d.Goals))
+        .attr("r", 4)
+        .attr("fill", function(d) {
+            return winnerYears.includes(d.Year) ? "red" : "steelblue";
+        });
+
+
+    const captionBox = svg.selectAll(".caption-box")
+        .data(data.filter(d => winnerYears.includes(d.Year)))
+        .enter()
+        .append("foreignObject")
+        .attr("class", "caption-box")
+        .attr("x", d => xScale(d.Year) - 20) 
+        .attr("y", d => yScale(d.Goals) - 30) 
+        .attr("width", 70)
+        .attr("height", 20)
+        .html("Balon D'Or");
+
+
+    svg.append("g")
+        .attr("transform", `translate(0, ${height})`)
+        .call(d3.axisBottom(xScale).ticks(5).tickFormat(d3.format("d")));
+
+
+    svg.append("g")
+        .call(d3.axisLeft(yScale));
+
+
+    svg.append("text")
+        .attr("x", width / 2)
+        .attr("y", height + margin.bottom - 10)
+        .style("text-anchor", "middle")
+        .text("Year");
+
+
+    svg.append("text")
+        .attr("transform", "rotate(-90)")
+        .attr("y", 0 - margin.left + 10)
+        .attr("x", 0 - (height / 2))
+        .attr("dy", "1em")
+        .style("text-anchor", "middle")
+        .text("Goals Scored");
+    }
+
+    
+    createLineChart(messiData, "line-chart", [2016, 2019]); 
+    createLineChart(ronaldoData, "line-chart-ronaldo", [2017, 2018]); 
+
+</script>
+
+<div style="max-width: 800px; margin: 20px auto; text-align: center;">
+    <p class="caption-text">These are 2 of the best players that have graced football in the history of the game. Personally, Ronaldo is my favorite player, but their MVP awards don't necessarily correlate to their goal tally, showing that football is more than just the number of goals scored. It's about creating chances and playing as a team, and that influence supersedes any number of goals you may score.</p>
+</div>
+<button class="next-page-button" onclick="redirectToNextPage()">Next Page</button>
+<script>
+    function redirectToNextPage() {
+        window.location.href = "scenetwo.html";
+    }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Top Scorers in the Top 5 Leagues World</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+
+    body{
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          height: 100vh;
+          margin: 0;
+          max-width: 100%;
+    }
+
+    .previous-page-button{
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        background-color: #007bff;
+        color: #fff;
+        border: none;
+        padding: 10px 20px;
+        font-size: 16px;
+        cursor: pointer;
+        border-radius: 4px; 
+    }
+    .tooltip {
+      position: absolute;
+      padding: 5px;
+      background-color: #f9f9f9;
+      border: 1px solid #ccc;
+      pointer-events: none;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <select id="year-select">
+    <option value="2016">2016</option>
+    <option value="2017">2017</option>
+    <option value="2018">2018</option>
+    <option value="2019">2019</option>
+    <option value="2020">2020</option>
+    
+  </select>
+  <div id="scatterplot"></div>
+  <div style="max-width: 800px; margin: 20px auto; text-align: left;">
+    <p class="caption-text">Click on any of the countries in legend. You can then hover on any datapoints and view the tooltips that contain detailed information regarding a player's performance that.</p>
+    <p class="caption-text">These are 2 of the best players that have graced football in the history of the game. Personally, Ronaldo is my favorite player, but their MVP awards don't necessarily correlate to their goal tally, showing that football is more than just the number of goals scored. It's about creating chances and playing as a team, and that influence supersedes any number of goals you may score.</p>
+</div>
+
+  <script>
+    //data load
+    d3.csv("soccer.csv").then(function(data) {
+      data.forEach(function(d) {
+        d.Matches_Played = +d.Matches_Played;
+        d.Goals = +d.Goals;
+      });
+
+      const margin = { top: 50, right: 150, bottom: 100, left: 70 };
+      const width = 800 - margin.left - margin.right;
+      const height = 500 - margin.top - margin.bottom;
+
+      const svg = d3.select("#scatterplot")
+        .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+        .attr("transform", `translate(${margin.left}, ${margin.top})`);
+
+      //using this color scheme
+      const colorScale = d3.scaleOrdinal(d3.schemeCategory10);
+
+      const xScale = d3.scaleLinear()
+        .domain(d3.extent(data, d => d.Matches_Played))
+        .range([0, width]);
+
+      const yScale = d3.scaleLinear()
+        .domain(d3.extent(data, d => d.Goals))
+        .range([height, 0]);
+
+ 
+      const circles = svg.selectAll("circle")
+        .data(data)
+        .enter()
+        .append("circle")
+        .attr("cx", d => xScale(d.Matches_Played))
+        .attr("cy", d => yScale(d.Goals))
+        .attr("r", 5)
+        .style("fill", d => colorScale(d.Country));
+
+      svg.append("g")
+        .attr("transform", `translate(0, ${height})`)
+        .call(d3.axisBottom(xScale));
+
+      svg.append("g")
+        .call(d3.axisLeft(yScale));
+
+      // x-axis
+      svg.append("text")
+        .attr("x", width / 2)
+        .attr("y", height + margin.bottom -60)
+        .style("text-anchor", "middle")
+        .text("Matches Played");
+
+      //y-axis
+      svg.append("text")
+        .attr("transform", "rotate(-90)")
+        .attr("y", 0 - margin.left + 10)
+        .attr("x", 0 - (height / 2))
+        .attr("dy", "1em")
+        .style("text-anchor", "middle")
+        .text("Goals");
+
+
+      svg.append("text")
+        .attr("x", width / 2)
+        .attr("y", -margin.top / 2)
+        .attr("text-anchor", "middle")
+        .style("font-size", "20px")
+        .text("Top Scorers of the Top 5 Leagues in the World");
+
+
+
+
+  
+      let selectedCountry = null; 
+
+      const legend = svg.selectAll(".legend")
+        .data(colorScale.domain())
+        .enter()
+        .append("g")
+        .filter(function(d) { return d; }) 
+        .attr("class", "legend")
+        .attr("transform", function(d, i) { return "translate(" + (width + 20) + "," + (i * 20) + ")"; })
+        .on("click", function(event, d) {
+          const sameCountryClicked = d === selectedCountry;
+          selectedCountry = sameCountryClicked ? null : d;
+          const filteredData = sameCountryClicked ? data : data.filter(item => item.Country === d);
+
+          const circlesUpdate = svg.selectAll("circle")
+            .data(filteredData, d => d.Player);
+
+          circlesUpdate.exit().remove();
+
+          circlesUpdate.enter()
+            .append("circle")
+            .attr("cx", d => xScale(d.Matches_Played))
+            .attr("cy", d => yScale(d.Goals))
+            .attr("r", 5)
+            .style("fill", d => colorScale(d.Country))
+            .on("mouseover", function(event, d) {
+              tooltip.html(`<strong>Player Name:</strong> ${d["Player Names"]}<br><strong>Goals:</strong> ${d.Goals}<br><strong>Matches Played:</strong> ${d.Matches_Played}<br><strong>League:</strong> ${d.League}<br><strong>Club:</strong> ${d.Club}`)
+                .style("display", "block")
+                .style("left", event.pageX + 10 + "px")
+                .style("top", event.pageY - 10 + "px");
+            })
+            .on("mouseout", function() {
+              tooltip.style("display", "none");
+            })
+            .on("click", function() {
+              tooltip.style("display", "none");
+            });
+
+          descriptionElement.html(description + "<br><strong>Selected Country:</strong> " + (sameCountryClicked ? "None" : d));
+        });
+
+      legend.append("rect")
+        .attr("x", 0)
+        .attr("width", 18)
+        .attr("height", 18)
+        .style("fill", colorScale);
+
+      legend.append("text")
+        .attr("x", 25)
+        .attr("y", 9)
+        .attr("dy", ".35em")
+        .style("text-anchor", "start")
+        .text(function(d) { return d; });
+
+
+      const tooltip = d3.select("body")
+        .append("div")
+        .attr("class", "tooltip")
+        .style("display", "none");
+
+
+      function updateScatterPlot(selectedYear) {
+        const filteredData = data.filter(d => d.Year === selectedYear);
+
+
+        const circlesUpdate = svg.selectAll("circle")
+          .data(filteredData, d => d.Player);
+
+
+        circlesUpdate.exit().remove();
+
+
+        circlesUpdate.enter()
+          .append("circle")
+          .attr("cx", d => xScale(d.Matches_Played))
+          .attr("cy", d => yScale(d.Goals))
+          .attr("r", 5)
+          .style("fill", d => colorScale(d.Country))
+
+        descriptionElement.html(description + "<br><strong>Selected Year:</strong> " + selectedYear);
+      }
+
+
+      updateScatterPlot("2016");
+
+
+      d3.select("#year-select").on("change", function() {
+        const selectedYear = this.value;
+        updateScatterPlot(selectedYear);
+      });
+
+
+ 
+
+    });
+  </script>
+
+
+
+<button class="previous-page-button" onclick="redirectToPreviousPage()">Previous Page</button>
+<script>
+
+    function redirectToPreviousPage() {
+        window.location.href = "scenetwo.html";
+    }
+</script>
+</body>
+</html>

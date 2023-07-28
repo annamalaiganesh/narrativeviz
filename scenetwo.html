@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Top 10 Goal Scorers in European Leagues (2017)</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .chart {
+
+      max-width: 800px;
+      margin: 50px auto;
+    }
+
+    .chart-title {
+      font-size: 20px;
+      font-weight: bold;
+      text-align: center;
+    }
+
+    .chart-subtitle {
+      font-size: 14px;
+      text-align: center;
+      margin-top: 10px;
+    }
+
+    .next-page-button {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background-color: #007bff;
+        color: #fff;
+        border: none;
+        padding: 10px 20px;
+        font-size: 16px;
+        cursor: pointer;
+        border-radius: 4px;
+    }
+
+    .previous-page-button{
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        background-color: #007bff;
+        color: #fff;
+        border: none;
+        padding: 10px 20px;
+        font-size: 16px;
+        cursor: pointer;
+        border-radius: 4px; 
+    }
+
+    .legend {
+
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-top: 20px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      margin-right: 20px;
+    }
+
+    .legend-item span {
+      margin-left: 5px;
+    }
+
+
+    .table-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 20px;
+    }
+
+
+    table {
+      border-collapse: collapse;
+    }
+
+    th, td {
+      border: 1px solid black;
+      padding: 8px;
+      text-align: center;
+    }
+
+    th {
+      background-color: #f2f2f2;
+    }
+
+
+    p {
+      margin-top: 10px;
+      text-align: left;
+    }
+  </style>
+</head>
+<body>
+  <div class="chart">
+    <div class="chart-title">Top 10 Goal Scorers in European Leagues (2017)</div>
+    <svg id="bar-chart"></svg>
+    <div class="legend" id="legend"></div>
+    <div class="table-container">
+        <table>
+            <tr>
+              <th>Country</th>
+              <th>Coefficient</th>
+            </tr>
+            <tr>
+              <td><span style="color: steelblue;">Spain</span></td>
+              <td>73.429</td>
+            </tr>
+            <tr>
+              <td><span style="color: #ff7f0e;">England</span></td>
+              <td>86.526</td>
+            </tr>
+            <tr>
+              <td><span style="color: #2ca02c;">France</span></td>
+              <td>50.112</td>
+            </tr>
+            <tr>
+              <td><span style="color: #d62728;">Germany</span></td>
+              <td>69.286</td>
+            </tr>
+            <tr>
+              <td><span style="color: #9467bd;">Italy</span></td>
+              <td>67.267</td>
+            </tr>
+          </table>
+        <p>Lets take top scorers in 2017 for example. As you can see below, coefficient values dictate how competitive a countries league is. Just because Immobile and Icardi have scored more goals than Ronaldo, this doesn't imply that they are better. They may simply be playing against easier opposition. This tells us that goals can't always be analyzed as the only factor for MVP awards since Ronaldo came 5th but still won the award. This is often a major misconception in Soccer.</p>
+      </div>
+    </div>
+
+  <script>
+
+    const colorScale = d3.scaleOrdinal(d3.schemeCategory10);
+
+
+    function createBarChart(data) {
+
+      data.sort((a, b) => b.Goals - a.Goals);
+
+
+      const top10Data = data.slice(0, 10);
+
+      const margin = { top: 50, right: 30, bottom: 70, left: 70 };
+      const width = 800 - margin.left - margin.right;
+      const height = 400 - margin.top - margin.bottom;
+
+      const svg = d3.select("#bar-chart")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+        .attr("transform", `translate(${margin.left}, ${margin.top})`);
+
+
+      const xScale = d3.scaleBand()
+        .domain(top10Data.map(d => d["Player Names"]))
+        .range([0, width])
+        .padding(0.2);
+
+      const yScale = d3.scaleLinear()
+        .domain([0, d3.max(top10Data, d => d.Goals)])
+        .range([height, 0]);
+
+
+      svg.selectAll("rect").remove();
+
+
+      svg.selectAll("rect")
+        .data(top10Data)
+        .enter()
+        .append("rect")
+        .attr("x", d => xScale(d["Player Names"]))
+        .attr("y", d => yScale(d.Goals))
+        .attr("width", xScale.bandwidth())
+        .attr("height", d => height - yScale(d.Goals))
+        .attr("fill", d => colorScale(d.Country));
+
+
+      svg.append("g")
+        .attr("transform", `translate(0, ${height})`)
+        .call(d3.axisBottom(xScale))
+        .selectAll("text")
+        .attr("transform", "rotate(-45)")
+        .attr("text-anchor", "end");
+
+
+      svg.append("g")
+        .call(d3.axisLeft(yScale));
+
+
+      svg.append("text")
+        .attr("x", width / 2)
+        .attr("y", height + margin.bottom - 10)
+        .style("text-anchor", "middle")
+        .text("Player Names");
+
+
+      svg.append("text")
+        .attr("transform", "rotate(-90)")
+        .attr("y", 0 - margin.left + 10)
+        .attr("x", 0 - (height / 2))
+        .attr("dy", "1em")
+        .style("text-anchor", "middle")
+        .text("Goals Scored");
+
+    }
+
+
+    d3.csv("soccer.csv").then(function(data) {
+      data.forEach(function(d) {
+        d.Goals = +d.Goals;
+      });
+
+
+      createBarChart(data.filter(d => d.Year === "2017"));
+
+    
+      const countries = ["England", "Spain", "Germany", "France", "Italy"];
+      const legend = d3.select("#legend")
+        .selectAll(".legend-item")
+        .data(countries)
+        .enter()
+        .append("div")
+        .attr("class", "legend-item")
+        .style("display", "flex")
+        .style("align-items", "center");
+
+      legend.append("div")
+        .style("width", "15px")
+        .style("height", "15px")
+        .style("background-color", d => colorScale(d));
+
+      legend.append("span")
+        .text(d => d);
+
+    });
+
+  </script>
+  <button class="next-page-button" onclick="redirectToNextPage()">Next Page</button>
+  <script>
+
+      function redirectToNextPage() {
+          window.location.href = "scenethree.html";
+      }
+  </script>
+    <button class="previous-page-button" onclick="redirectToPreviousPage()">Previous Page</button>
+    <script>
+
+        function redirectToPreviousPage() {
+            window.location.href = "index.html";
+        }
+    </script>
+</body>
+</html>
